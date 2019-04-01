@@ -8,11 +8,12 @@ import (
 	"fmt"
 	"github.com/Masterminds/sprig"
 	"github.com/autom8ter/gocrypt/certificates"
+	"github.com/autom8ter/gocrypt/cron"
 	"github.com/autom8ter/gocrypt/dos"
 	"github.com/autom8ter/gocrypt/encrypt"
-	"github.com/autom8ter/gocrypt/hack"
 	"github.com/autom8ter/gocrypt/keylogger"
 	"github.com/autom8ter/gocrypt/keys"
+	"github.com/autom8ter/gocrypt/load"
 	"github.com/autom8ter/gocrypt/passwords"
 	"github.com/autom8ter/gocrypt/utils"
 	"github.com/howeyc/gopass"
@@ -42,21 +43,23 @@ func (r RemoteProvider) String() string {
 }
 
 type GoCrypt struct {
-	cli   *hack.Client
-	cache *viper.Viper
-	fsos  *afero.Afero
+	loader *load.Client
+	cache  *viper.Viper
+	fsos   *afero.Afero
+	cro    *cron.Cron
 }
 
 func NewGoCrypt() *GoCrypt {
 	t := &afero.Afero{
-		afero.NewOsFs(),
+		Fs: afero.NewOsFs(),
 	}
 	c := viper.New()
 	c.SetFs(t)
 	return &GoCrypt{
-		cli:   hack.New(http.DefaultClient),
-		cache: c,
-		fsos:  t,
+		loader: load.New(http.DefaultClient),
+		cache:  c,
+		fsos:   t,
+		cro:    cron.New(),
 	}
 }
 
@@ -64,19 +67,16 @@ func (g *GoCrypt) Cache() *viper.Viper {
 	return g.cache
 }
 
-func (g *GoCrypt) Hack() *hack.Client {
-	if g.cache.GetString("SHODAN_KEY") != "" {
-		fmt.Println()
-	}
-	_, ok := os.LookupEnv("SHODAN_KEY")
-	if !ok {
-		fmt.Println(os.Setenv("SHODAN_KEY", g.Prompt(os.Stdin, "please provide a shodan api key")))
-	}
-	return g.cli
+func (g *GoCrypt) Load() *load.Client {
+	return g.loader
 }
 
 func (g *GoCrypt) FS() *afero.Afero {
 	return g.fsos
+}
+
+func (g *GoCrypt) Cron() *cron.Cron {
+	return g.cro
 }
 
 // PrettyJson encodes an item into a pretty (indented) JSON string
@@ -197,6 +197,12 @@ func (g *GoCrypt) Shell(cmd string) string {
 
 func (g *GoCrypt) Bash(cmd string) string {
 	e := exec.Command("/bin/bash", "-c", cmd)
+	res, _ := e.Output()
+	return strings.TrimSpace(string(res))
+}
+
+func (g *GoCrypt) Python3(cmd string) string {
+	e := exec.Command("python3", "-c", cmd)
 	res, _ := e.Output()
 	return strings.TrimSpace(string(res))
 }

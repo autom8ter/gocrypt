@@ -1,17 +1,12 @@
 package gocrypt_test
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"github.com/autom8ter/gocrypt"
 	"strings"
 	"testing"
 )
-
-func init() {
-	g.Hack().Debug()
-}
 
 var g = gocrypt.NewGoCrypt()
 var key = "a very very very very secret key"
@@ -55,41 +50,8 @@ func TestGoCrypt_DecryptDocuments(t *testing.T) {
 	if err := g.DecryptFiles("testing", key, 0755); err != nil {
 		t.Fatal(err.Error())
 	}
-
 }
 
-func TestDNS(t *testing.T) {
-	resp, err := g.Hack().GetDNS(context.Background(), "google.com", "netfilx.com", "facebook.com")
-	if err != nil {
-		fmt.Println(g.PrettyJson(resp))
-		t.Fatal(err.Error())
-	}
-	fmt.Println(g.PrettyJson(resp))
-}
-
-func TestReverseDNS(t *testing.T) {
-	resp, err := g.Hack().ReverseDNS(context.Background(), "31.13.71.36", "172.217.12.206", "52.32.78.165")
-	if err != nil {
-		fmt.Println(g.PrettyJson(resp))
-		t.Fatal(err.Error())
-	}
-	fmt.Println(g.PrettyJson(resp))
-}
-
-func TestMyIP(t *testing.T) {
-	resp, err := g.Hack().GetMyIP(context.Background())
-	if err != nil {
-		fmt.Println(g.PrettyJson(resp))
-		t.Fatal(err.Error())
-	}
-	fmt.Println(g.PrettyJson(resp))
-}
-
-func TestHeaders(t *testing.T) {
-	resp, err := g.Hack().Headers(context.Background())
-	if err != nil {
-		fmt.Println(g.PrettyJson(resp))
-		t.Fatal(err.Error())
-	}
-	fmt.Println(g.PrettyJson(resp))
+func TestGoCrypt_Python3(t *testing.T) {
+	fmt.Println(g.Python3("a='example';print(a)"))
 }
