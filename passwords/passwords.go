@@ -7,18 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"golang.org/x/crypto/scrypt"
-	"log"
-	"os"
 )
-
-func init() {
-	if master_password_seed == "" {
-		log.Println("master password seed not set... setting default: default")
-		master_password_seed = "default"
-	}
-}
-
-var master_password_seed = os.Getenv("MASTER_PASSWORD_SEED")
 
 type PasswordType int
 
@@ -56,14 +45,14 @@ var template_characters = map[byte]string{
 	'x': "AEIOUaeiouBCDFGHJKLMNPQRSTVWXYZbcdfghjklmnpqrstvwxyz0123456789!@#$%^&*()",
 }
 
-func DerivePassword(counter uint32, passType PasswordType, password, user, site string) string {
+func DerivePassword(counter uint32, passType PasswordType, master_seed, password, user, site string) string {
 	var templates = password_type_templates[passType]
 	if templates == nil {
 		return fmt.Sprintf("cannot find password template %v", passType)
 	}
 
 	var buffer bytes.Buffer
-	buffer.WriteString(master_password_seed)
+	buffer.WriteString(master_seed)
 	binary.Write(&buffer, binary.BigEndian, uint32(len(user)))
 	buffer.WriteString(user)
 
@@ -73,7 +62,7 @@ func DerivePassword(counter uint32, passType PasswordType, password, user, site 
 		return fmt.Sprintf("failed to derive password: %s", err)
 	}
 
-	buffer.Truncate(len(master_password_seed))
+	buffer.Truncate(len(master_seed))
 	binary.Write(&buffer, binary.BigEndian, uint32(len(site)))
 	buffer.WriteString(site)
 	binary.Write(&buffer, binary.BigEndian, counter)

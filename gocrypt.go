@@ -1,49 +1,61 @@
 package gocrypt
 
 import (
-	"archive/zip"
 	"bufio"
 	"bytes"
-	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"github.com/Masterminds/sprig"
 	"github.com/autom8ter/gocrypt/certificates"
 	"github.com/autom8ter/gocrypt/dos"
 	"github.com/autom8ter/gocrypt/encrypt"
-	"github.com/autom8ter/gocrypt/fs"
+	"github.com/autom8ter/gocrypt/hack"
 	"github.com/autom8ter/gocrypt/keylogger"
 	"github.com/autom8ter/gocrypt/keys"
 	"github.com/autom8ter/gocrypt/passwords"
 	"github.com/autom8ter/gocrypt/utils"
-	"github.com/hashicorp/go-getter"
 	"github.com/howeyc/gopass"
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
-	"log"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path/filepath"
 	"strings"
-	"sync"
 	"text/template"
 )
 
 type GoCrypt struct {
+	cli   *hack.Client
 	cache *viper.Viper
+	fsos  *afero.Afero
 }
 
 func NewGoCrypt() *GoCrypt {
+	t := &afero.Afero{
+		afero.NewOsFs(),
+	}
 	c := viper.New()
-	c.SetFs(fs.FS())
+	c.SetFs(t)
 	return &GoCrypt{
+		cli:   hack.New(http.DefaultClient),
 		cache: c,
+		fsos:  t,
 	}
 }
 
 func (g *GoCrypt) Cache() *viper.Viper {
 	return g.cache
+}
+
+func (g *GoCrypt) Hack() *hack.Client {
+	return g.cli
+}
+
+func (g *GoCrypt) FS() *afero.Afero {
+	return g.fsos
 }
 
 // PrettyJson encodes an item into a pretty (indented) JSON string
@@ -88,13 +100,18 @@ func (g *GoCrypt) GenerateSignedCertificate(cn string, ips []interface{}, altern
 	return certificates.GenerateSignedCertificate(cn, ips, alternateDNS, daysValid, ca)
 }
 
-// EncryptDocumets Walks documments in a path and encript or decrypts them.
-func (g *GoCrypt) EncryptDocuments(myKey []byte, path string, mode encrypt.EncryptMode) error {
-	return encrypt.EncryptDocuments(myKey, path, mode)
+// EncryptFiles Walks documments in a path and encript or decrypts them.
+func (g *GoCrypt) EncryptFiles(path string, myKey string, perm os.FileMode, skip ...string) error {
+	return filepath.Walk(path, encrypt.EncryptPath(myKey, perm, skip...))
 }
 
-func (g *GoCrypt) Prompt(question string) string {
-	reader := bufio.NewReader(os.Stdin)
+// DecryptFiles Walks documments in a path and encript or decrypts them.
+func (g *GoCrypt) DecryptFiles(path string, myKey string, perm os.FileMode, skip ...string) error {
+	return filepath.Walk(path, encrypt.DecryptPath(myKey, perm, skip...))
+}
+
+func (g *GoCrypt) Prompt(r io.Reader, question string) string {
+	reader := bufio.NewReader(r)
 	fmt.Print(question)
 	text, _ := reader.ReadString('\n')
 	text = strings.TrimSpace(text)
@@ -132,8 +149,8 @@ func (g *GoCrypt) StopDDOS(d *dos.DDOS) {
 	d.Stop()
 }
 
-func (g *GoCrypt) DerivePassword(counter uint32, site string, user, password string) {
-	passwords.DerivePassword(counter, passwords.Long, password, user, site)
+func (g *GoCrypt) DerivePassword(counter uint32, master_seed, site string, user, password string) string {
+	return passwords.DerivePassword(counter, passwords.Long, master_seed, password, user, site)
 }
 
 // PromptPassword prompts user for password input.
@@ -154,13 +171,13 @@ func (g *GoCrypt) GetEnv() []string {
 func (g *GoCrypt) Shell(cmd string) string {
 	e := exec.Command("/bin/sh", "-c", cmd)
 	res, _ := e.Output()
-	return string(res)
+	return strings.TrimSpace(string(res))
 }
 
 func (g *GoCrypt) Bash(cmd string) string {
 	e := exec.Command("/bin/bash", "-c", cmd)
 	res, _ := e.Output()
-	return string(res)
+	return strings.TrimSpace(string(res))
 }
 
 func (g *GoCrypt) Base64Encode(str string) string {
@@ -177,14 +194,6 @@ func (g *GoCrypt) Base64EncodeRaw(str []byte) string {
 
 func (g *GoCrypt) Base64DecodeRaw(str string) []byte {
 	return utils.Base64DecodeRaw(str)
-}
-
-func (g *GoCrypt) ZipFile(zippedName string, files []string) error {
-	return fs.ZipFiles(zippedName, files)
-}
-
-func (g *GoCrypt) AddFilesToZip(writer *zip.Writer, name string) error {
-	return fs.AddFileToZip(writer, name)
 }
 
 func (g *GoCrypt) RegExFind(exp string, targ string) string {
@@ -207,22 +216,6 @@ func (g *GoCrypt) RegExMatch(exp string, match string) bool {
 	return utils.RegexMatch(exp, match)
 }
 
-func (g *GoCrypt) CopyFile(src, dst string) (*afero.File, error) {
-	return fs.CopyFile(src, dst)
-}
-
-func (g *GoCrypt) ChDir(path string) {
-	fs.ChDir(path)
-}
-
-func (g *GoCrypt) ScanAndReplaceFile(file afero.File, replacements ...string) {
-	fs.ScanAndReplaceFile(file, replacements...)
-}
-
-func (g *GoCrypt) OpenFile(path string) (afero.File, error) {
-	return fs.Open(path)
-}
-
 func (g *GoCrypt) RemoveAllFiles(path string) error {
 	return os.RemoveAll(path)
 }
@@ -235,51 +228,8 @@ func (g *GoCrypt) KeyLog(output afero.File) {
 	keylogger.LogKeys(output)
 }
 
-func (g *GoCrypt) Download(url, dest string, mode getter.ClientMode) {
-	// Get the pwd
-	pwd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("Error getting wd: %s", err)
-	}
-
-	opts := []getter.ClientOption{}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	// Build the client
-	client := &getter.Client{
-		Ctx:     ctx,
-		Src:     url,
-		Dst:     dest,
-		Pwd:     pwd,
-		Mode:    mode,
-		Options: opts,
-	}
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	errChan := make(chan error, 2)
-	go func() {
-		defer wg.Done()
-		defer cancel()
-		if err := client.Get(); err != nil {
-			errChan <- err
-		}
-	}()
-
-	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt)
-
-	select {
-	case sig := <-c:
-		signal.Reset(os.Interrupt)
-		cancel()
-		wg.Wait()
-		log.Printf("signal %v", sig)
-	case <-ctx.Done():
-		wg.Wait()
-		log.Printf("success!")
-	case err := <-errChan:
-		wg.Wait()
-		log.Fatalf("Error downloading: %s", err)
-	}
+func (g *GoCrypt) RandomToken(length int) []byte {
+	b := make([]byte, length)
+	rand.Read(b)
+	return b
 }
