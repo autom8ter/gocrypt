@@ -26,7 +26,9 @@ import (
 	"strings"
 	"text/template"
 )
+
 type RemoteProvider int
+
 const (
 	Consul RemoteProvider = iota
 	Etcd
