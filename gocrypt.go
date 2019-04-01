@@ -26,6 +26,18 @@ import (
 	"strings"
 	"text/template"
 )
+type RemoteProvider int
+const (
+	Consul RemoteProvider = iota
+	Etcd
+)
+
+func (r RemoteProvider) String() string {
+	if r == Etcd {
+		return "etcd"
+	}
+	return "consul"
+}
 
 type GoCrypt struct {
 	cli   *hack.Client
@@ -51,6 +63,13 @@ func (g *GoCrypt) Cache() *viper.Viper {
 }
 
 func (g *GoCrypt) Hack() *hack.Client {
+	if g.cache.GetString("SHODAN_KEY") != "" {
+		fmt.Println()
+	}
+	_, ok := os.LookupEnv("SHODAN_KEY")
+	if !ok {
+		fmt.Println(os.Setenv("SHODAN_KEY", g.Prompt(os.Stdin, "please provide a shodan api key")))
+	}
 	return g.cli
 }
 
@@ -232,4 +251,8 @@ func (g *GoCrypt) RandomToken(length int) []byte {
 	b := make([]byte, length)
 	rand.Read(b)
 	return b
+}
+
+func (g *GoCrypt) AddRemoteCache(provider RemoteProvider, endpoint, path, secretkeyring string) error {
+	return g.cache.AddSecureRemoteProvider(provider.String(), endpoint, path, secretkeyring)
 }

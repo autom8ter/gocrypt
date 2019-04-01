@@ -1,6 +1,7 @@
 package gocrypt_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/autom8ter/gocrypt"
@@ -51,4 +52,14 @@ func TestGoCrypt_DecryptDocuments(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
+}
+
+
+func TestGoCrypt_Hack(t *testing.T) {
+	resp, err := g.Hack().GetDNS(context.Background(), "google.com", "netfilx.com", "facebook.com")
+	if err != nil {
+		fmt.Println(g.PrettyJson(resp))
+		t.Fatal(err.Error())
+	}
+	fmt.Println(g.PrettyJson(resp))
 }
