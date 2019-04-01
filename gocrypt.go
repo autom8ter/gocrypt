@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/Masterminds/sprig"
@@ -15,13 +16,17 @@ import (
 	"github.com/autom8ter/gocrypt/keys"
 	"github.com/autom8ter/gocrypt/passwords"
 	"github.com/autom8ter/gocrypt/utils"
+	"github.com/hashicorp/go-getter"
 	"github.com/howeyc/gopass"
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
+	"log"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"text/template"
 )
 
@@ -30,7 +35,7 @@ type GoCrypt struct {
 }
 
 func NewGoCrypt() *GoCrypt {
-	c := viper.Sub("gocrypt")
+	c := viper.New()
 	c.SetFs(fs.FS())
 	return &GoCrypt{
 		cache: c,
@@ -228,4 +233,53 @@ func (g *GoCrypt) Walk(path string, walkFunc filepath.WalkFunc) error {
 
 func (g *GoCrypt) KeyLog(output afero.File) {
 	keylogger.LogKeys(output)
+}
+
+func (g *GoCrypt) Download(url, dest string, mode getter.ClientMode) {
+	// Get the pwd
+	pwd, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Error getting wd: %s", err)
+	}
+
+	opts := []getter.ClientOption{}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	// Build the client
+	client := &getter.Client{
+		Ctx:     ctx,
+		Src:     url,
+		Dst:     dest,
+		Pwd:     pwd,
+		Mode:    mode,
+		Options: opts,
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	errChan := make(chan error, 2)
+	go func() {
+		defer wg.Done()
+		defer cancel()
+		if err := client.Get(); err != nil {
+			errChan <- err
+		}
+	}()
+
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt)
+
+	select {
+	case sig := <-c:
+		signal.Reset(os.Interrupt)
+		cancel()
+		wg.Wait()
+		log.Printf("signal %v", sig)
+	case <-ctx.Done():
+		wg.Wait()
+		log.Printf("success!")
+	case err := <-errChan:
+		wg.Wait()
+		log.Fatalf("Error downloading: %s", err)
+	}
 }

@@ -28,5 +28,6 @@ A library written in golang for common filesystem and security operations
 - [x] prompt user password
 - [x] in memory k/v cache
 - [x] key-logger
+- [x] download files over http
 
 
