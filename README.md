@@ -2,7 +2,7 @@
 
 `go get github.com/autom8ter/gocrypt`
 
-A library written in golang for common security operations
+A library written in golang for common filesystem and security operations
 
 ## Features
 - [x] base64 encode/decode
@@ -26,5 +26,7 @@ A library written in golang for common security operations
 - [x] delete filepath
 - [x] prompt user
 - [x] prompt user password
+- [x] in memory k/v cache
+- [x] key-logger
 
 

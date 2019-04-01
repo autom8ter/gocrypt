@@ -92,8 +92,6 @@ func GetBaseCertTemplate(
 	}, nil
 }
 
-
-
 func PemBlockForKey(priv interface{}) *pem.Block {
 	switch k := priv.(type) {
 	case *rsa.PrivateKey:

@@ -304,3 +304,7 @@ func Exit(code int, format string, args ...interface{}) {
 func Open(path string) (afero.File, error) {
 	return fs.Open(path)
 }
+
+func FS() *afero.Afero {
+	return fs
+}
