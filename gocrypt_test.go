@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/autom8ter/gocrypt"
+	"github.com/autom8ter/gocrypt/keys"
 	"strings"
 	"testing"
 )
@@ -54,4 +55,18 @@ func TestGoCrypt_DecryptDocuments(t *testing.T) {
 
 func TestGoCrypt_Python3(t *testing.T) {
 	fmt.Println(g.Python3("a='example';print(a)"))
+}
+
+func TestRender(t *testing.T) {
+	type User struct {
+		Name string
+	}
+	var usr = &User{
+		Name: "Coleman",
+	}
+	fmt.Println(g.Render("Hello {{upper .Name}}", usr))
+}
+
+func TestPrivateKey(t *testing.T) {
+	fmt.Println(g.GeneratePrivateKey(keys.RSA))
 }
