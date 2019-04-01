@@ -85,6 +85,11 @@ func GetNetIPs(ips []interface{}) ([]net.IP, error) {
 	return netIPs, nil
 }
 
+func NetIp(ipString string) net.IP {
+	return net.ParseIP(ipString)
+
+}
+
 func GetAlternateDNSStrs(alternateDNS []interface{}) ([]string, error) {
 	if alternateDNS == nil {
 		return []string{}, nil
