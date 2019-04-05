@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,16 +27,13 @@ func EncryptPath(key string, perm os.FileMode, skip ...string) filepath.WalkFunc
 	return func(path string, info os.FileInfo, err error) error {
 		for _, p := range skip {
 			if strings.Contains(path, p) {
-				log.Printf("skipping file: %s\n", path)
 				return nil
 			}
 		}
 		if filepath.Ext(path) == ".enc" {
-			log.Printf("skipping file with .enc extension: %s\n", path)
 			return nil
 		}
 		if info.IsDir() {
-			log.Printf("skipping directory: %s\n", path)
 			return nil
 		}
 		if err != nil {
@@ -48,11 +44,9 @@ func EncryptPath(key string, perm os.FileMode, skip ...string) filepath.WalkFunc
 		if err != nil {
 			return err
 		}
-		log.Printf("encrypting target file: %s\n", path)
 		if err := ioutil.WriteFile(path+".enc", encrypted, perm); err != nil {
 			return err
 		}
-		log.Printf("removing unencrypted files: %s\n", path)
 		if err := os.RemoveAll(path); err != nil {
 			return err
 		}
@@ -65,12 +59,10 @@ func DecryptPath(key string, perm os.FileMode, skip ...string) filepath.WalkFunc
 	return func(path string, info os.FileInfo, err error) error {
 		for _, p := range skip {
 			if strings.Contains(path, p) {
-				log.Printf("skipping file: %s\n", path)
 				return nil
 			}
 		}
 		if filepath.Ext(path) != ".enc" {
-			log.Printf("skipping path: %s\n", path)
 			return nil
 		}
 		bits, err := ioutil.ReadFile(path)
@@ -80,16 +72,13 @@ func DecryptPath(key string, perm os.FileMode, skip ...string) filepath.WalkFunc
 		}
 		newpath := strings.TrimSuffix(path, ".enc")
 		if exists(newpath) {
-			log.Printf("removing old files: %s\n", newpath)
 			if err := os.RemoveAll(newpath); err != nil {
 				return err
 			}
 		}
-		log.Printf("removing encrypted files: %s\n", path)
 		if err := os.RemoveAll(path); err != nil {
 			return err
 		}
-		log.Printf("writing unencrypted files: %s\n", newpath)
 		if err := ioutil.WriteFile(newpath, decrypted, perm); err != nil {
 			return err
 		}

@@ -43,6 +43,14 @@ a cli utility tool to easily encrypt and decrypt files
 `,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		if key == "" {
+			key = os.Getenv("GOCRYPT_KEY")
+			if key == "" {
+				log.Fatalln("please provide a valid key with the -k flag or $GOCRYPT_KEY environmental variable")
+			}
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		var g = gocrypt.NewGoCrypt()
 
@@ -50,9 +58,6 @@ a cli utility tool to easily encrypt and decrypt files
 		case decrypt && encrypt:
 			log.Fatalln("cannot set mode to decrypt and encrypt simultaneously")
 		case decrypt:
-			if key == "" {
-				log.Fatalln("please provide a valid key with the -k flag")
-			}
 			if file == "" {
 				log.Fatalln("please provide a valid file path with the -f flag")
 			}
@@ -62,13 +67,6 @@ a cli utility tool to easily encrypt and decrypt files
 				log.Fatalln(err.Error())
 			}
 		case encrypt:
-			if key == "" {
-				log.Println("searching for encryption key in $GOCRYPT_KEY")
-				key = os.Getenv("GOCRYPT_KEY")
-				if key == "" {
-					log.Fatalln("please provide a valid key with the -k flag or $GOCRYPT_KEY environmental variable")
-				}
-			}
 			if file == "" {
 				log.Fatalln("please provide a valid file path with the -f flag")
 			}

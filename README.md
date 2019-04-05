@@ -32,6 +32,7 @@ A library written in golang for filesystem and security operations
 
 
 ```text
+
 --------------------------------------------------------
   ______  _____  _______  ______ __   __  _____  _______
  |  ____ |     | |       |_____/   \_/   |_____]    |   
@@ -43,6 +44,11 @@ a cli utility tool to easily encrypt and decrypt files
 
 Usage:
   gocrypt [flags]
+  gocrypt [command]
+
+Available Commands:
+  help        Help about any command
+  read        unencrypt a file at runtime, print the contents to stdout, and then re-encrypt
 
 Flags:
   -d, --decrypt       set to decrypt mode
@@ -50,6 +56,8 @@ Flags:
   -f, --file string   target file
   -h, --help          help for gocrypt
   -k, --key string    encryption/decryption key ($GOCRYPT_KEY)
+
+Use "gocrypt [command] --help" for more information about a command.
 
 
 
