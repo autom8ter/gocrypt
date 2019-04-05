@@ -24,3 +24,33 @@ A library written in golang for filesystem and security operations
 - [x] download files over http
 
 
+## GoCrypt CLI
+
+`go get github.com/autom8ter/gocrypt/cmd/gocrypt
+`
+
+
+
+```text
+--------------------------------------------------------
+  ______  _____  _______  ______ __   __  _____  _______
+ |  ____ |     | |       |_____/   \_/   |_____]    |   
+ |_____| |_____| |_____  |    \_    |    |          |
+--------------------------------------------------------
+
+a cli utility tool to easily encrypt and decrypt files
+
+
+Usage:
+  gocrypt [flags]
+
+Flags:
+  -d, --decrypt       set to decrypt mode
+  -e, --encrypt       set to encrypt mode
+  -f, --file string   target file
+  -h, --help          help for gocrypt
+  -k, --key string    encryption/decryption key
+
+
+
+```

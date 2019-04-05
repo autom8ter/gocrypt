@@ -10,9 +10,12 @@ require (
 	github.com/howeyc/gopass v0.0.0-20170109162249-bf9dde6d0d2c
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/mitchellh/go-homedir v1.0.0
 	github.com/moul/http2curl v1.0.0 // indirect
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/spf13/afero v1.2.2
+	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.3.2
 	golang.org/x/crypto v0.0.0-20190325154230-a5d413f7728c
 	golang.org/x/oauth2 v0.0.0-20190319182350-c85d3e98c914 // indirect
