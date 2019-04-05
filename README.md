@@ -49,7 +49,8 @@ Flags:
   -e, --encrypt       set to encrypt mode
   -f, --file string   target file
   -h, --help          help for gocrypt
-  -k, --key string    encryption/decryption key
+  -k, --key string    encryption/decryption key ($GOCRYPT_KEY)
+
 
 
 

@@ -47,7 +47,7 @@ a cli utility tool to easily encrypt and decrypt files
 		var g = gocrypt.NewGoCrypt()
 
 		switch {
-		case decrypt &&encrypt:
+		case decrypt && encrypt:
 			log.Fatalln("cannot set mode to decrypt and encrypt simultaneously")
 		case decrypt:
 			if key == "" {
@@ -63,7 +63,11 @@ a cli utility tool to easily encrypt and decrypt files
 			}
 		case encrypt:
 			if key == "" {
-				log.Fatalln("please provide a valid key with the -k flag")
+				log.Println("searching for encryption key in $GOCRYPT_KEY")
+				key = os.Getenv("GOCRYPT_KEY")
+				if key == "" {
+					log.Fatalln("please provide a valid key with the -k flag or $GOCRYPT_KEY environmental variable")
+				}
 			}
 			if file == "" {
 				log.Fatalln("please provide a valid file path with the -f flag")
@@ -93,5 +97,5 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&encrypt, "encrypt", "e", false, "set to encrypt mode")
 	rootCmd.PersistentFlags().BoolVarP(&decrypt, "decrypt", "d", false, "set to decrypt mode")
 	rootCmd.PersistentFlags().StringVarP(&file, "file", "f", "", "target file")
-	rootCmd.PersistentFlags().StringVarP(&key, "key", "k", "", "encryption/decryption key")
+	rootCmd.PersistentFlags().StringVarP(&key, "key", "k", "", "encryption/decryption key ($GOCRYPT_KEY)")
 }
