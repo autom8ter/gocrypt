@@ -45,7 +45,7 @@ a cli utility tool to easily encrypt and decrypt files
 	// has an action associated with it:
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		if key == "" {
-			key = os.Getenv("GOCRYPT_KEY")
+			key = os.Getenv("SECRET")
 			if key == "" {
 				log.Fatalln("please provide a valid key with the -k flag or $GOCRYPT_KEY environmental variable")
 			}
@@ -95,5 +95,5 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&encrypt, "encrypt", "e", false, "set to encrypt mode")
 	rootCmd.PersistentFlags().BoolVarP(&decrypt, "decrypt", "d", false, "set to decrypt mode")
 	rootCmd.PersistentFlags().StringVarP(&file, "file", "f", "", "target file")
-	rootCmd.PersistentFlags().StringVarP(&key, "key", "k", "", "encryption/decryption key ($GOCRYPT_KEY)")
+	rootCmd.PersistentFlags().StringVarP(&key, "key", "k", "", "encryption/decryption key ($SECRET)")
 }
