@@ -47,7 +47,7 @@ a cli utility tool to easily encrypt and decrypt files
 		if key == "" {
 			key = os.Getenv("SECRET")
 			if key == "" {
-				log.Fatalln("please provide a valid key with the -k flag or $GOCRYPT_KEY environmental variable")
+				log.Fatalln("please provide a valid key with the -k flag or $SECRET environmental variable")
 			}
 		}
 	},
